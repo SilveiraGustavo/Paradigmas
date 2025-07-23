@@ -8,7 +8,6 @@ import gerenciadores.FuncionarioGerenciador
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
-
 fun main() {
     val gerenciadorFuncionarios = FuncionarioGerenciador()
     val gerenciadorClientes = ClienteGerenciador()
