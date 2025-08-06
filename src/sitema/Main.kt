@@ -7,13 +7,13 @@ import gerenciadores.ConsultaGerenciador
 import gerenciadores.FuncionarioGerenciador
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
-//modificacao numero 1
+
 fun main() {
     val gerenciadorFuncionarios = FuncionarioGerenciador()
     val gerenciadorClientes = ClienteGerenciador()
     val gerenciadorAnimais = AnimalGerenciador()
     val gerenciadorConsultas = ConsultaGerenciador()
-    val teste: Int
+
 
     while (true) {
         println("=== Sistema Clínica Veterinária ===")
