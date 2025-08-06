@@ -12,18 +12,48 @@ class ClienteGerenciador {
     fun adicionarCliente(cliente: Pessoa) {
         clientes.add(cliente)
     }
-    fun salvarClienteNoBanco(cliente: Cliente, conexao: Connection, id: Int): Boolean {
-        val sql = "INSERT INTO cliente (nome, tel, end, cpf, ID) VALUES (?, ?, ?, ?, ?)"
+    fun salvarClienteNoBanco(cliente: Cliente, conexao: Connection): Boolean {
+        val sql = "INSERT INTO cliente (nome, cpf, telefone, endereco) VALUES (?, ?, ?, ?)"
         return conexao.prepareStatement(sql).use { pstmt ->
             pstmt.setString(1, cliente.nome)
-            pstmt.setString(2, cliente.telefone)
-            pstmt.setString(3, cliente.endereco)
-            pstmt.setString(4, cliente.getCpf())
-            pstmt.setInt(5, id)
+            pstmt.setString(2, cliente.getCpf())
+            pstmt.setString(3, cliente.telefone)
+            pstmt.setString(4, cliente.endereco)
             pstmt.executeUpdate() > 0
         }
     }
+    fun listarClientesBD(conexao: Connection) {
+        val sql = "SELECT id, nome FROM cliente"
+        conexao.prepareStatement(sql).use { pstmt ->
+            val rs = pstmt.executeQuery()
+            while (rs.next()) {
+                val id = rs.getInt("id")
+                val nome = rs.getString("nome")
+                println("ID: $id, Nome: $nome")
+            }
+        }
+    }
 
+    fun buscarClientePorNomeBD(conexao: Connection, nomeBusca: String) {
+        val sql = "SELECT id, nome FROM cliente WHERE nome = ?"
+        conexao.prepareStatement(sql).use { pstmt ->
+            pstmt.setString(1, nomeBusca)
+            val rs = pstmt.executeQuery()
+            while (rs.next()) {
+                val id = rs.getInt("id")
+                val nome = rs.getString("nome")
+                println("ID: $id, Nome: $nome")
+            }
+        }
+    }
+
+    fun removerClientePorIdBD(conexao: Connection, id: Int): Boolean {
+        val sql = "DELETE FROM cliente WHERE id = ?"
+        return conexao.prepareStatement(sql).use { pstmt ->
+            pstmt.setInt(1, id)
+            pstmt.executeUpdate() > 0
+        }
+    }
     // Lista todos os clientes
     fun listarClientes() {
         if (clientes.isEmpty()) {

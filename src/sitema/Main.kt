@@ -5,14 +5,11 @@ import gerenciadores.AnimalGerenciador
 import gerenciadores.ClienteGerenciador
 import gerenciadores.ConsultaGerenciador
 import gerenciadores.FuncionarioGerenciador
-import sistema.SistemaGerenciador
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import java.sql.Connection
 import java.sql.DriverManager
-import java.sql.ResultSet
 import java.sql.SQLException
-import java.sql.Statement
 
 fun main() {
     val gerenciadorFuncionarios = FuncionarioGerenciador()
@@ -149,20 +146,33 @@ fun menuClientes(gerenciador: ClienteGerenciador) {
 
                 val cliente = Cliente(nome, telefone, endereco, cpf)
                 gerenciador.adicionarCliente(cliente)
-                gerenciador.salvarClienteNoBanco(cliente, conexao,1 )
+                gerenciador.salvarClienteNoBanco(cliente, conexao)
                 println("Cliente cadastrado com sucesso.")
             }
-            "2" -> gerenciador.listarClientes()
+            "2" -> {
+                    gerenciador.listarClientes()
+                    gerenciador.listarClientesBD(conexao)
+            }
             "3" -> {
                 print("Nome para busca: ")
                 val nomeBusca = readLine() ?: continue
                 val resultados = gerenciador.buscarClientePorNome(nomeBusca)
                 if (resultados.isEmpty()) println("Nenhum cliente encontrado.")
                 else resultados.forEach { it.exibirInformacoes() }
+                gerenciador.buscarClientePorNomeBD(conexao,nomeBusca)
+
             }
             "4" -> {
                 print("Nome para remover: ")
                 val nomeRemover = readLine() ?: continue
+                val idRemoverStr = readLine()
+                val idRemover = idRemoverStr?.toIntOrNull()
+
+                if (idRemover != null) {
+                    gerenciador.removerClientePorIdBD(conexao, idRemover) // aqui é Int não nulo
+                } else {
+                    println("ID inválido")
+                }
                 if (gerenciador.removerClientePorNome(nomeRemover)) {
                     println("Cliente removido.")
                 } else {
