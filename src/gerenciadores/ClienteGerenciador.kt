@@ -1,6 +1,8 @@
 package gerenciadores
 
+import cliente.Cliente
 import cliente.Pessoa
+import java.sql.Connection
 
 class ClienteGerenciador {
 
@@ -9,6 +11,17 @@ class ClienteGerenciador {
     // Adiciona um cliente
     fun adicionarCliente(cliente: Pessoa) {
         clientes.add(cliente)
+    }
+    fun salvarClienteNoBanco(cliente: Cliente, conexao: Connection, id: Int): Boolean {
+        val sql = "INSERT INTO cliente (nome, tel, end, cpf, ID) VALUES (?, ?, ?, ?, ?)"
+        return conexao.prepareStatement(sql).use { pstmt ->
+            pstmt.setString(1, cliente.nome)
+            pstmt.setString(2, cliente.telefone)
+            pstmt.setString(3, cliente.endereco)
+            pstmt.setString(4, cliente.getCpf())
+            pstmt.setInt(5, id)
+            pstmt.executeUpdate() > 0
+        }
     }
 
     // Lista todos os clientes

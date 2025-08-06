@@ -5,8 +5,14 @@ import gerenciadores.AnimalGerenciador
 import gerenciadores.ClienteGerenciador
 import gerenciadores.ConsultaGerenciador
 import gerenciadores.FuncionarioGerenciador
+import sistema.SistemaGerenciador
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.ResultSet
+import java.sql.SQLException
+import java.sql.Statement
 
 fun main() {
     val gerenciadorFuncionarios = FuncionarioGerenciador()
@@ -110,6 +116,18 @@ fun menuFuncionarios(gerenciador: FuncionarioGerenciador) {
 // --- Menu Clientes ---
 
 fun menuClientes(gerenciador: ClienteGerenciador) {
+    val url = "jdbc:mysql://localhost/clinicavet"
+    val user = "root"
+    val password = ""
+    fun criarConexao(): Connection? {
+        return try {
+            DriverManager.getConnection(url, user, password)
+        } catch (e: SQLException) {
+            println("Erro ao conectar ao banco: ${e.message}")
+            null
+        }
+    }
+    val conexao = criarConexao()!!
     while (true) {
         println("\n--- Menu Clientes ---")
         println("1. Cadastrar Cliente")
@@ -131,6 +149,7 @@ fun menuClientes(gerenciador: ClienteGerenciador) {
 
                 val cliente = Cliente(nome, telefone, endereco, cpf)
                 gerenciador.adicionarCliente(cliente)
+                gerenciador.salvarClienteNoBanco(cliente, conexao,1 )
                 println("Cliente cadastrado com sucesso.")
             }
             "2" -> gerenciador.listarClientes()
