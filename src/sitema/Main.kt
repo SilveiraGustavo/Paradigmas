@@ -1,3 +1,5 @@
+package sitema
+
 import funcionarios.*
 import cliente.*
 import clinica.*
@@ -12,6 +14,10 @@ import java.sql.DriverManager
 import java.sql.SQLException
 
 fun main() {
+    val url = "jdbc:mysql://localhost/clinicavet"
+    val user = "root"
+    val password = ""
+    val conexao = criarConexao(url, user, password)!!
     val gerenciadorFuncionarios = FuncionarioGerenciador()
     val gerenciadorClientes = ClienteGerenciador()
     val gerenciadorAnimais = AnimalGerenciador()
@@ -28,7 +34,7 @@ fun main() {
         print("Escolha uma opção: ")
         when (readLine()?.trim()) {
             "1" -> menuFuncionarios(gerenciadorFuncionarios)
-            "2" -> menuClientes(gerenciadorClientes)
+            "2" -> menuClientes(gerenciadorClientes, conexao)
             "3" -> menuAnimais(gerenciadorAnimais, gerenciadorClientes)
             "4" -> menuConsultas(gerenciadorConsultas, gerenciadorAnimais)
             "0" -> {
@@ -38,6 +44,14 @@ fun main() {
             else -> println("Opção inválida, tente novamente.")
         }
         println()
+    }
+}
+fun criarConexao(url: String, user: String, password: String): Connection? {
+    return try {
+        DriverManager.getConnection(url, user, password)
+    } catch (e: SQLException) {
+        println("Erro ao conectar ao banco: ${e.message}")
+        null
     }
 }
 
@@ -112,19 +126,7 @@ fun menuFuncionarios(gerenciador: FuncionarioGerenciador) {
 
 // --- Menu Clientes ---
 
-fun menuClientes(gerenciador: ClienteGerenciador) {
-    val url = "jdbc:mysql://localhost/clinicavet"
-    val user = "root"
-    val password = ""
-    fun criarConexao(): Connection? {
-        return try {
-            DriverManager.getConnection(url, user, password)
-        } catch (e: SQLException) {
-            println("Erro ao conectar ao banco: ${e.message}")
-            null
-        }
-    }
-    val conexao = criarConexao()!!
+fun menuClientes(gerenciador: ClienteGerenciador, conexao: Connection) {
     while (true) {
         println("\n--- Menu Clientes ---")
         println("1. Cadastrar Cliente")
@@ -165,6 +167,7 @@ fun menuClientes(gerenciador: ClienteGerenciador) {
             "4" -> {
                 print("Nome para remover: ")
                 val nomeRemover = readLine() ?: continue
+                print("ID para remover: ")
                 val idRemoverStr = readLine()
                 val idRemover = idRemoverStr?.toIntOrNull()
 
@@ -277,7 +280,7 @@ fun menuConsultas(gerenciador: ConsultaGerenciador, gerenciadorAnimais: AnimalGe
                     val data = try {
                         LocalDate.parse(dataStr)
                     } catch (e: DateTimeParseException) {
-                        println("Data inválida. Use o formato aaaa-mm-dd.")
+                        println("Data inválida: ${e.message}. Use o formato aaaa-mm-dd.")
                         continue
                     }
 
