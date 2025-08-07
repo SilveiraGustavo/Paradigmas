@@ -1,3 +1,4 @@
+/*
 package funcionarios
 
 open class Funcionario(
@@ -28,3 +29,4 @@ open class Funcionario(
         println("===============================")
     }
 }
+*/
