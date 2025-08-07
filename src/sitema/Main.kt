@@ -7,11 +7,15 @@ import gerenciadores.AnimalGerenciador
 import gerenciadores.ClienteGerenciador
 import gerenciadores.ConsultaGerenciador
 import gerenciadores.FuncionarioGerenciador
+import java.awt.GridLayout
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
+import java.awt.*
+import java.awt.event.ActionEvent
+import javax.swing.*
 
 fun main() {
     val url = "jdbc:mysql://localhost/clinicavet"
@@ -23,8 +27,18 @@ fun main() {
     val gerenciadorAnimais = AnimalGerenciador()
     val gerenciadorConsultas = ConsultaGerenciador()
 
+    SwingUtilities.invokeLater {
+        criarJanelaPrincipal(
+            gerenciadorFuncionarios,
+            gerenciadorClientes,
+            gerenciadorAnimais,
+            gerenciadorConsultas,
+            conexao
+        )
+    }
 
-    while (true) {
+
+    /*while (true) {
         println("=== Sistema Clínica Veterinária ===")
         println("1. Gerenciar Funcionários")
         println("2. Gerenciar Clientes")
@@ -44,8 +58,59 @@ fun main() {
             else -> println("Opção inválida, tente novamente.")
         }
         println()
-    }
+    }*/
+
 }
+
+fun criarJanelaPrincipal(
+    gerenciadorFuncionarios: FuncionarioGerenciador,
+    gerenciadorClientes: ClienteGerenciador,
+    gerenciadorAnimais: AnimalGerenciador,
+    gerenciadorConsultas: ConsultaGerenciador,
+    conexao: Connection
+) {
+    val frame = JFrame("Sistema Clínica Veterinária")
+    frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+    frame.setSize(400, 300)
+    frame.layout = GridLayout(5, 1)
+
+    val btnFuncionarios = JButton("Gerenciar Funcionários")
+    val btnClientes = JButton("Gerenciar Clientes")
+    val btnAnimais = JButton("Gerenciar Animais")
+    val btnConsultas = JButton("Gerenciar Consultas")
+    val btnSair = JButton("Sair")
+
+    btnFuncionarios.addActionListener {
+        menuFuncionarios(gerenciadorFuncionarios)
+    }
+
+    btnClientes.addActionListener {
+        menuClientesGUI(gerenciadorClientes, conexao)
+    }
+
+    btnAnimais.addActionListener {
+        menuAnimais(gerenciadorAnimais, gerenciadorClientes)
+    }
+
+    btnConsultas.addActionListener {
+        menuConsultas(gerenciadorConsultas, gerenciadorAnimais)
+    }
+
+    btnSair.addActionListener {
+        JOptionPane.showMessageDialog(frame, "Saindo... Até mais!")
+        frame.dispose()
+    }
+
+    frame.add(btnFuncionarios)
+    frame.add(btnClientes)
+    frame.add(btnAnimais)
+    frame.add(btnConsultas)
+    frame.add(btnSair)
+
+    frame.setLocationRelativeTo(null)
+    frame.isVisible = true
+}
+
 fun criarConexao(url: String, user: String, password: String): Connection? {
     return try {
         DriverManager.getConnection(url, user, password)
@@ -329,4 +394,109 @@ fun menuConsultas(gerenciador: ConsultaGerenciador, gerenciadorAnimais: AnimalGe
             else -> println("Opção inválida.")
         }
     }
+}
+fun menuClientesGUI(gerenciador: ClienteGerenciador, conexao: Connection) {
+    val frame = JFrame("Menu Clientes")
+    frame.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
+    frame.setSize(500, 400)
+    frame.layout = BorderLayout()
+
+    val painelBotoes = JPanel(GridLayout(5, 1, 5, 5))
+    val painelCentral = JPanel(BorderLayout())
+    val areaTexto = JTextArea(10, 40)
+    areaTexto.isEditable = false
+    val scrollPane = JScrollPane(areaTexto)
+
+    // Botões
+    val btnCadastrar = JButton("Cadastrar Cliente")
+    val btnListar = JButton("Listar Clientes")
+    val btnBuscar = JButton("Buscar Cliente por Nome")
+    val btnRemover = JButton("Remover Cliente por Nome e ID")
+    val btnFechar = JButton("Fechar")
+
+    // Ações
+    btnCadastrar.addActionListener {
+        val nome = JOptionPane.showInputDialog(frame, "Nome:")
+        val telefone = JOptionPane.showInputDialog(frame, "Telefone:")
+        val endereco = JOptionPane.showInputDialog(frame, "Endereço:")
+        val cpf = JOptionPane.showInputDialog(frame, "CPF:")
+
+        if (nome != null && telefone != null && endereco != null && cpf != null) {
+            val cliente = Cliente(nome, telefone, endereco, cpf)
+            gerenciador.adicionarCliente(cliente)
+            gerenciador.salvarClienteNoBanco(cliente, conexao)
+            areaTexto.text = "Cliente cadastrado com sucesso.\n$nome"
+        } else {
+            areaTexto.text = "Cadastro cancelado ou incompleto."
+        }
+    }
+
+    btnListar.addActionListener {
+        //val clientesMemoria = gerenciador.listarClientes()
+        val clientesBanco = gerenciador.listarClientesBD(conexao)
+
+        val builder = StringBuilder()
+
+        builder.append("\nClientes no Banco:\n")
+        for (cliente in clientesBanco) {
+            builder.append("- ${cliente.nome}, ${cliente.telefone}, ${cliente.endereco}, ${cliente.getCpf()}\n")
+        }
+
+        areaTexto.text = builder.toString()
+    }
+
+    btnBuscar.addActionListener {
+        val nomeBusca = JOptionPane.showInputDialog(frame, "Nome para buscar:")
+        if (nomeBusca != null) {
+            val resultados = gerenciador.buscarClientePorNome(nomeBusca)
+            val resultadosBD = gerenciador.buscarClientePorNomeBD(conexao, nomeBusca)
+
+            if (resultados.isEmpty()) {
+                areaTexto.text = "Nenhum cliente encontrado na memória.\n"
+            } else {
+                areaTexto.text = "Clientes encontrados na memória:\n"
+                resultados.forEach {
+                    areaTexto.append("${it.nome} - ${it.telefone} - ${it.endereco}\n")
+                }
+            }
+        }
+    }
+
+    btnRemover.addActionListener {
+        val nomeRemover = JOptionPane.showInputDialog(frame, "Nome para remover:")
+        val idRemoverStr = JOptionPane.showInputDialog(frame, "ID para remover (Banco):")
+        val idRemover = idRemoverStr?.toIntOrNull()
+
+        if (idRemover != null) {
+            val sucessoBD = gerenciador.removerClientePorIdBD(conexao, idRemover)
+            val sucessoMemoria = gerenciador.removerClientePorNome(nomeRemover ?: "")
+
+            val mensagem = StringBuilder()
+            if (sucessoBD) mensagem.append("Cliente removido do banco com ID $idRemover.\n")
+            if (sucessoMemoria) mensagem.append("Cliente removido da memória com nome $nomeRemover.\n")
+            if (!sucessoBD && !sucessoMemoria) mensagem.append("Cliente não encontrado.")
+
+            areaTexto.text = mensagem.toString()
+        } else {
+            areaTexto.text = "ID inválido."
+        }
+    }
+
+    btnFechar.addActionListener {
+        frame.dispose()
+    }
+
+    painelBotoes.add(btnCadastrar)
+    painelBotoes.add(btnListar)
+    painelBotoes.add(btnBuscar)
+    painelBotoes.add(btnRemover)
+    painelBotoes.add(btnFechar)
+
+    painelCentral.add(scrollPane, BorderLayout.CENTER)
+
+    frame.add(painelBotoes, BorderLayout.WEST)
+    frame.add(painelCentral, BorderLayout.CENTER)
+
+    frame.setLocationRelativeTo(null)
+    frame.isVisible = true
 }

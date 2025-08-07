@@ -22,7 +22,7 @@ class ClienteGerenciador {
             pstmt.executeUpdate() > 0
         }
     }
-    fun listarClientesBD(conexao: Connection) {
+    /*fun listarClientesBD(conexao: Connection) {
         val sql = "SELECT id, nome FROM cliente"
         conexao.prepareStatement(sql).use { pstmt ->
             val rs = pstmt.executeQuery()
@@ -32,6 +32,25 @@ class ClienteGerenciador {
                 println("ID: $id, Nome: $nome")
             }
         }
+    }*/
+    fun listarClientesBD(conexao: Connection): List<Cliente> {
+        val clientes = mutableListOf<Cliente>()
+        val sql = "SELECT id, nome, telefone, endereco, cpf FROM cliente"
+
+        conexao.prepareStatement(sql).use { pstmt ->
+            val rs = pstmt.executeQuery()
+            while (rs.next()) {
+                val nome = rs.getString("nome")
+                val telefone = rs.getString("telefone")
+                val endereco = rs.getString("endereco")
+                val cpf = rs.getString("cpf")
+
+                val cliente = Cliente(nome, telefone, endereco, cpf)
+                clientes.add(cliente)
+            }
+        }
+
+        return clientes
     }
 
     fun buscarClientePorNomeBD(conexao: Connection, nomeBusca: String) {
